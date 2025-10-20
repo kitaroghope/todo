@@ -59,6 +59,7 @@ class TodoApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Todo + Supabase',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(

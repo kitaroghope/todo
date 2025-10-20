@@ -57,12 +57,25 @@ class _EmailOtpScreenState extends State<EmailOtpScreen> {
     final token = _code.map((c) => c.text).join();
     if (token.length != 6) return;
     final auth = context.read<AuthProvider>();
-    await auth.verifyEmailOtp(_email.text.trim(), token);
-    if (!mounted) return;
-    if (auth.isAuthenticated) {
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil(HomeScreen.route, (_) => false);
+
+    try {
+      await auth.verifyEmailOtp(_email.text.trim(), token);
+      if (!mounted) return;
+
+      // Wait a brief moment for auth state to update
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      if (mounted && auth.isAuthenticated) {
+        // Navigate to home, clearing the navigation stack
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          HomeScreen.route,
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // Error is already handled by AuthProvider
+      // Just ensure we don't navigate on error
+      return;
     }
   }
 
@@ -140,6 +153,19 @@ class _EmailOtpScreenState extends State<EmailOtpScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+
+    // Auto-redirect when email is verified
+    if (auth.isAuthenticated && auth.isEmailVerified) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            HomeScreen.route,
+            (route) => false,
+          );
+        }
+      });
+    }
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(

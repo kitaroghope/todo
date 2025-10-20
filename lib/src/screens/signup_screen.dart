@@ -15,12 +15,14 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _confirmPassword = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _confirmPassword.dispose();
     super.dispose();
   }
 
@@ -171,6 +173,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 validator: (v) => (v != null && v.length >= 6)
                                     ? null
                                     : 'Min 6 characters',
+                              ),
+                              const SizedBox(height: 20),
+                              TextFormField(
+                                controller: _confirmPassword,
+                                obscureText: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'Confirm Password',
+                                  hintText: 'Re-enter your password',
+                                  prefixIcon: Icon(Icons.lock_outline),
+                                ),
+                                validator: (v) {
+                                  if (v == null || v.isEmpty) {
+                                    return 'Please confirm your password';
+                                  }
+                                  if (v != _password.text) {
+                                    return 'Passwords do not match';
+                                  }
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 32),
                               SizedBox(

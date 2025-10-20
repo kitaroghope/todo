@@ -61,6 +61,106 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Show edit dialog for editing todo title
+  Future<void> _showEditDialog(String todoId, String currentTitle) async {
+    final editController = TextEditingController(text: currentTitle);
+    final todos = context.read<TodoProvider?>();
+
+    return showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Edit Todo'),
+          content: TextField(
+            controller: editController,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: 'Enter new title',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (_) async {
+              final newTitle = editController.text.trim();
+              if (newTitle.isEmpty || newTitle == currentTitle || todos == null) {
+                Navigator.of(dialogContext).pop();
+                return;
+              }
+
+              Navigator.of(dialogContext).pop(); // Close edit dialog
+              _showProcessDialog('Updating todo...');
+
+              try {
+                await todos.rename(todoId, newTitle);
+                todos.clearError();
+                if (mounted) {
+                  Navigator.of(context).pop(); // Close process dialog
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.of(context).pop(); // Close process dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to update todo: $e'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                final newTitle = editController.text.trim();
+                if (newTitle.isEmpty || newTitle == currentTitle || todos == null) {
+                  Navigator.of(dialogContext).pop();
+                  return;
+                }
+
+                Navigator.of(dialogContext).pop(); // Close edit dialog
+                _showProcessDialog('Updating todo...');
+
+                try {
+                  await todos.rename(todoId, newTitle);
+                  todos.clearError();
+                  if (mounted) {
+                    Navigator.of(context).pop(); // Close process dialog
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    Navigator.of(context).pop(); // Close process dialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to update todo: $e'),
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Text(
+                'Save',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -651,6 +751,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                                         ),
                                                   ),
                                                 ),
+                                              ),
+                                              IconButton(
+                                                icon: Icon(
+                                                  Icons.edit_outlined,
+                                                  color: Theme.of(context).colorScheme.primary,
+                                                ),
+                                                onPressed:
+                                                    _isOperationLoading(
+                                                      'edit_${t.id}',
+                                                    )
+                                                    ? null
+                                                    : () => _showEditDialog(t.id, t.title),
+                                                tooltip: 'Edit todo',
                                               ),
                                               IconButton(
                                                 icon: Icon(
